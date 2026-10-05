@@ -2,7 +2,7 @@ package com.techmonkey.bottledlight;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -10,10 +10,11 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -33,7 +34,7 @@ public class BottledLight implements ModInitializer {
     public void onInitialize() {
         System.out.println("[bottledlight] Initializing Bottled Light mod");
 
-        ResourceLocation itemId = ResourceLocation.fromNamespaceAndPath(MOD_ID, "bottled_light");
+        Identifier itemId = Identifier.fromNamespaceAndPath(MOD_ID, "bottled_light");
         BOTTLED_LIGHT = net.minecraft.core.Registry.register(
                 BuiltInRegistries.ITEM,
                 itemId,
@@ -41,10 +42,10 @@ public class BottledLight implements ModInitializer {
                         .setId(ResourceKey.create(Registries.ITEM, itemId)))
         );
 
-        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS)
+        CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS)
                 .register(content -> content.accept(BOTTLED_LIGHT));
 
-        ResourceLocation blockId = ResourceLocation.fromNamespaceAndPath(MOD_ID, "bottled_light_block");
+        Identifier blockId = Identifier.fromNamespaceAndPath(MOD_ID, "bottled_light_block");
         BOTTLED_LIGHT_BLOCK = net.minecraft.core.Registry.register(
                 BuiltInRegistries.BLOCK,
                 blockId,
@@ -136,7 +137,8 @@ public class BottledLight implements ModInitializer {
 
                 if (!player.isCreative()) {
                     stack.shrink(1);
-                    player.getInventory().placeItemBackInInventory(new ItemStack(Items.GLASS_BOTTLE));
+                    player.getInventory().placeItemBackInInventory(
+                            new ItemStack(Items.GLASS_BOTTLE), Prediction.SERVER_ONLY);
                 }
 
                 return InteractionResult.SUCCESS;

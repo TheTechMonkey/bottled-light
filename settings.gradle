@@ -6,17 +6,4 @@ pluginManagement {
     }
 }
 
-plugins {
-    id "fabric-loom" version "1.14.8"
-}
-
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-    repositories {
-        maven { url = "https://maven.fabricmc.net/" }
-        maven { url = "https://libraries.minecraft.net/" }
-        mavenCentral()
-    }
-}
-
 rootProject.name = "bottledlight"
