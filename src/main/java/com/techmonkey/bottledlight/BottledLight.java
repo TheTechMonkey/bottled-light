@@ -80,12 +80,16 @@ public class BottledLight implements ModInitializer {
 
                 if (existing.is(BOTTLED_LIGHT_BLOCK)) {
                     world.setBlock(posToPlace,
-                            BOTTLED_LIGHT_BLOCK.defaultBlockState().setValue(BottledLightBlock.LEVEL, 15),
+                            existing.setValue(BottledLightBlock.LEVEL, 15),
                             3);
                     success = true;
                 } else if (existing.isAir() || !existing.isSolidRender()) {
+                    boolean waterlogged = existing.getFluidState().getType()
+                            == net.minecraft.world.level.material.Fluids.WATER;
                     world.setBlock(posToPlace,
-                            BOTTLED_LIGHT_BLOCK.defaultBlockState().setValue(BottledLightBlock.LEVEL, 15),
+                            BOTTLED_LIGHT_BLOCK.defaultBlockState()
+                                    .setValue(BottledLightBlock.LEVEL, 15)
+                                    .setValue(BottledLightBlock.WATERLOGGED, waterlogged),
                             3);
                     success = true;
                 }
@@ -127,7 +131,14 @@ public class BottledLight implements ModInitializer {
 
                 int next = current - 1;
                 if (next <= 0) {
-                    world.removeBlock(posToDim, false);
+                    if (lightState.getValue(BottledLightBlock.WATERLOGGED)) {
+                        world.setBlock(posToDim,
+                                net.minecraft.world.level.material.Fluids.WATER
+                                        .getSource(false).createLegacyBlock(),
+                                3);
+                    } else {
+                        world.removeBlock(posToDim, false);
+                    }
                 } else {
                     world.setBlock(posToDim, lightState.setValue(BottledLightBlock.LEVEL, next), 3);
                 }
