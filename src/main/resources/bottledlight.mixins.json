@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "package": "com.techmonkey.bottledlight.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": ["GameRendererMixin", "RenderPipelinesAccessor"],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

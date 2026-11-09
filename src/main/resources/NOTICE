@@ -1,0 +1,4 @@
+Bottled Light's colored-light rendering pipeline is derived from LumaLight
+by fdderng and is used under the MIT License. Only the block-light scanning,
+screen-space colored-light rendering, render hook, and associated shader were
+adapted. See LICENSE_LumaLight for the full license notice.

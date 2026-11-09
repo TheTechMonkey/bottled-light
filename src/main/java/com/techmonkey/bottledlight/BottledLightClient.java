@@ -2,7 +2,6 @@ package com.techmonkey.bottledlight;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -20,9 +19,7 @@ public class BottledLightClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        if (FabricLoader.getInstance().isModLoaded("lumalight")) {
-            LumaLightCompat.register();
-        }
+        BottledLightRendering.register();
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             Minecraft mc = Minecraft.getInstance();
