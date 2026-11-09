@@ -52,7 +52,8 @@ void main() {
         return;
     }
 
-    vec3 accumulatedRadiance = vec3(0.0);
+    vec3 accumulatedColor = vec3(0.0);
+    float accumulatedWeight = 0.0;
     for (int index = 0; index < MAX_LIGHTS; index++) {
         if (index >= lightCount) break;
         vec4 positionRadius = LightPosRadius[index];
@@ -74,12 +75,30 @@ void main() {
         vec3 linearLight = srgbToLinear(colorIntensity.rgb);
         float lightLuma = dot(linearLight, vec3(0.2126, 0.7152, 0.0722));
         linearLight = mix(vec3(lightLuma), linearLight, clamp(EffectData.z, 0.0, 1.5));
-        accumulatedRadiance += linearLight * colorIntensity.a * attenuation * cameraFade;
+        float weight = colorIntensity.a * attenuation * cameraFade;
+        accumulatedColor += linearLight * weight;
+        accumulatedWeight += weight;
     }
 
+    if (accumulatedWeight <= 0.0001) {
+        fragColor = vec4(max(sceneColor, vec3(0.0)), 1.0);
+        return;
+    }
+
+    // The block already supplies Minecraft's normal light level. Colorize that
+    // existing illumination without adding more energy or washing out the scene.
     vec3 sceneLinear = srgbToLinear(sceneColor);
-    vec3 materialResponse = mix(vec3(0.16), sqrt(max(sceneLinear, vec3(0.0))), 0.72);
-    vec3 addedLight = accumulatedRadiance * materialResponse * EffectData.x * 0.82;
-    addedLight /= vec3(1.0) + addedLight * 0.42;
-    fragColor = vec4(max(linearToSrgb(sceneLinear + addedLight), vec3(0.0)), 1.0);
+    vec3 lightColor = accumulatedColor / accumulatedWeight;
+    float lightLuma = max(dot(lightColor, vec3(0.2126, 0.7152, 0.0722)), 0.02);
+    vec3 tintScale = clamp(lightColor / lightLuma, vec3(0.0), vec3(3.0));
+    vec3 colorized = sceneLinear * mix(vec3(1.0), tintScale, 0.58);
+
+    float sceneLuma = dot(sceneLinear, vec3(0.2126, 0.7152, 0.0722));
+    float colorizedLuma = max(dot(colorized, vec3(0.2126, 0.7152, 0.0722)), 0.00001);
+    colorized *= sceneLuma / colorizedLuma;
+
+    float blendAmount = smoothstep(0.0, 1.0, min(accumulatedWeight, 1.0))
+        * clamp(EffectData.x, 0.0, 1.0);
+    vec3 result = mix(sceneLinear, colorized, blendAmount);
+    fragColor = vec4(clamp(linearToSrgb(result), 0.0, 1.0), 1.0);
 }
