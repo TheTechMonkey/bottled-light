@@ -19,9 +19,10 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
-import net.minecraft.world.item.CreativeModeTabs;
 
 public class BottledLight implements ModInitializer {
 
@@ -42,7 +43,10 @@ public class BottledLight implements ModInitializer {
                         .setId(ResourceKey.create(Registries.ITEM, itemId)))
         );
 
-        CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS)
+        ResourceKey<net.minecraft.world.item.CreativeModeTab> functionalBlocks = ResourceKey.create(
+                Registries.CREATIVE_MODE_TAB,
+                Identifier.withDefaultNamespace("functional_blocks"));
+        CreativeModeTabEvents.modifyOutputEvent(functionalBlocks)
                 .register(content -> content.accept(BOTTLED_LIGHT));
 
         Identifier blockId = Identifier.fromNamespaceAndPath(MOD_ID, "bottled_light_block");
@@ -71,6 +75,37 @@ public class BottledLight implements ModInitializer {
 
             net.minecraft.world.level.block.state.BlockState stateAtHit = world.getBlockState(hitPos);
             net.minecraft.world.level.block.state.BlockState stateAtOffset = world.getBlockState(offsetPos);
+
+            DyeColor dyeColor = stack.get(DataComponents.DYE);
+            if (hand == InteractionHand.MAIN_HAND
+                    && dyeColor != null
+                    && player.getOffhandItem().is(BOTTLED_LIGHT)) {
+                BlockPos posToDye = null;
+                if (stateAtHit.is(BOTTLED_LIGHT_BLOCK)) {
+                    posToDye = hitPos;
+                } else if (stateAtOffset.is(BOTTLED_LIGHT_BLOCK)) {
+                    posToDye = offsetPos;
+                }
+
+                if (posToDye != null) {
+                    net.minecraft.world.level.block.state.BlockState lightState = world.getBlockState(posToDye);
+                    DyeColor currentColor = lightState.getValue(BottledLightBlock.COLOR);
+
+                    if (currentColor != dyeColor) {
+                        world.setBlock(posToDye,
+                                lightState.setValue(BottledLightBlock.COLOR, dyeColor),
+                                3);
+                        world.playSound(null, posToDye, SoundEvents.DYE_USE,
+                                SoundSource.BLOCKS, 0.8F, 1.1F);
+                        spawnDyeSparkles((ServerLevel) world, posToDye, dyeColor);
+
+                        if (!player.isCreative()) {
+                            stack.shrink(1);
+                        }
+                    }
+                    return InteractionResult.SUCCESS;
+                }
+            }
 
             if (stack.is(BOTTLED_LIGHT)) {
                 BlockPos posToPlace = stateAtHit.is(BOTTLED_LIGHT_BLOCK) ? hitPos : offsetPos;
@@ -172,6 +207,18 @@ public class BottledLight implements ModInitializer {
                 count,
                 0.002, 0.008, 0.002,
                 0.01
+        );
+    }
+
+    private static void spawnDyeSparkles(ServerLevel level, BlockPos pos, DyeColor color) {
+        level.sendParticles(
+                new net.minecraft.core.particles.DustParticleOptions(BottledLightColors.rgb(color), 0.9F),
+                pos.getX() + 0.5,
+                pos.getY() + 0.55,
+                pos.getZ() + 0.5,
+                12,
+                0.22, 0.22, 0.22,
+                0.015
         );
     }
 

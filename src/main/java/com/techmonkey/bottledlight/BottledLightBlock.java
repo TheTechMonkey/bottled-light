@@ -6,6 +6,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
@@ -18,6 +19,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -29,6 +31,7 @@ public class BottledLightBlock extends Block implements SimpleWaterloggedBlock {
 
     public static final IntegerProperty LEVEL = BlockStateProperties.LEVEL;
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+    public static final EnumProperty<DyeColor> COLOR = EnumProperty.create("color", DyeColor.class);
 
     private static final VoxelShape HITBOX = Block.box(4, 4, 4, 12, 12, 12);
     private static final int MAX_LEVEL = 15;
@@ -37,12 +40,13 @@ public class BottledLightBlock extends Block implements SimpleWaterloggedBlock {
         super(props);
         registerDefaultState(stateDefinition.any()
                 .setValue(LEVEL, MAX_LEVEL)
+                .setValue(COLOR, DyeColor.WHITE)
                 .setValue(WATERLOGGED, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(LEVEL, WATERLOGGED);
+        builder.add(LEVEL, COLOR, WATERLOGGED);
     }
 
     @Override

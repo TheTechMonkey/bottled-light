@@ -9,15 +9,18 @@
   "license": "MIT",
   "icon": "assets/bottledlight/textures/item/bottled_light.png",
   "environment": "*",
-"entrypoints": {
-  "main": ["com.techmonkey.bottledlight.BottledLight"],
-  "client": ["com.techmonkey.bottledlight.BottledLightClient"]
-},
+  "entrypoints": {
+    "main": ["com.techmonkey.bottledlight.BottledLight"],
+    "client": ["com.techmonkey.bottledlight.BottledLightClient"]
+  },
   "mixins": [],
   "depends": {
     "fabricloader": ">=0.19.5",
     "minecraft": "26.3",
     "java": ">=25",
     "fabric-api": ">=0.161.0+26.3"
+  },
+  "suggests": {
+    "lumalight": ">=100.0.0"
   }
 }
