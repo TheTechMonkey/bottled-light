@@ -55,7 +55,7 @@ final class BottledLightColorRenderer {
 
     static void render(LevelRenderContext context) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.level == null || BottledLightShaderCompatibility.isShaderPackActive()) return;
+        if (minecraft.level == null) return;
 
         RenderTarget main = minecraft.gameRenderer.mainRenderTarget();
         if (main.getColorTexture() == null || main.getDepthTexture() == null || main.width <= 0 || main.height <= 0) return;

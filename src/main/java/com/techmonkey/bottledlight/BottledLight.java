@@ -1,6 +1,7 @@
 package com.techmonkey.bottledlight;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.minecraft.core.BlockPos;
@@ -64,10 +65,42 @@ public class BottledLight implements ModInitializer {
                 )
         );
 
-        UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
-            if (world.isClientSide()) return InteractionResult.PASS;
+        AttackBlockCallback.EVENT.register((player, world, hand, pos, direction) -> {
+            if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
 
+            ItemStack dyeStack = player.getMainHandItem();
+            DyeColor dyeColor = dyeStack.get(DataComponents.DYE);
+            if (dyeColor == null || !player.getOffhandItem().is(BOTTLED_LIGHT)) {
+                return InteractionResult.PASS;
+            }
+
+            net.minecraft.world.level.block.state.BlockState lightState = world.getBlockState(pos);
+            if (!lightState.is(BOTTLED_LIGHT_BLOCK)) return InteractionResult.PASS;
+
+            if (!world.isClientSide()) {
+                DyeColor currentColor = lightState.getValue(BottledLightBlock.COLOR);
+                if (currentColor != dyeColor) {
+                    world.setBlock(pos, lightState.setValue(BottledLightBlock.COLOR, dyeColor), 3);
+                    world.playSound(null, pos, SoundEvents.DYE_USE, SoundSource.BLOCKS, 0.8F, 1.1F);
+                    spawnDyeSparkles((ServerLevel) world, pos, dyeColor);
+                    if (!player.isCreative()) dyeStack.shrink(1);
+                }
+            }
+
+            return InteractionResult.SUCCESS;
+        });
+
+        UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
             ItemStack stack = player.getItemInHand(hand);
+            if (hand == InteractionHand.MAIN_HAND
+                    && stack.get(DataComponents.DYE) != null
+                    && player.getOffhandItem().is(BOTTLED_LIGHT)) {
+                // Dyeing is intentionally left-click only. Do not let the offhand
+                // Bottled Light place another light during a right-click.
+                return InteractionResult.FAIL;
+            }
+
+            if (world.isClientSide()) return InteractionResult.PASS;
 
             BlockPos hitPos = hit.getBlockPos();
             Direction face = hit.getDirection();
@@ -75,37 +108,6 @@ public class BottledLight implements ModInitializer {
 
             net.minecraft.world.level.block.state.BlockState stateAtHit = world.getBlockState(hitPos);
             net.minecraft.world.level.block.state.BlockState stateAtOffset = world.getBlockState(offsetPos);
-
-            DyeColor dyeColor = stack.get(DataComponents.DYE);
-            if (hand == InteractionHand.MAIN_HAND
-                    && dyeColor != null
-                    && player.getOffhandItem().is(BOTTLED_LIGHT)) {
-                BlockPos posToDye = null;
-                if (stateAtHit.is(BOTTLED_LIGHT_BLOCK)) {
-                    posToDye = hitPos;
-                } else if (stateAtOffset.is(BOTTLED_LIGHT_BLOCK)) {
-                    posToDye = offsetPos;
-                }
-
-                if (posToDye != null) {
-                    net.minecraft.world.level.block.state.BlockState lightState = world.getBlockState(posToDye);
-                    DyeColor currentColor = lightState.getValue(BottledLightBlock.COLOR);
-
-                    if (currentColor != dyeColor) {
-                        world.setBlock(posToDye,
-                                lightState.setValue(BottledLightBlock.COLOR, dyeColor),
-                                3);
-                        world.playSound(null, posToDye, SoundEvents.DYE_USE,
-                                SoundSource.BLOCKS, 0.8F, 1.1F);
-                        spawnDyeSparkles((ServerLevel) world, posToDye, dyeColor);
-
-                        if (!player.isCreative()) {
-                            stack.shrink(1);
-                        }
-                    }
-                    return InteractionResult.SUCCESS;
-                }
-            }
 
             if (stack.is(BOTTLED_LIGHT)) {
                 BlockPos posToPlace = stateAtHit.is(BOTTLED_LIGHT_BLOCK) ? hitPos : offsetPos;
